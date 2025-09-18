@@ -1,0 +1,29 @@
+sandbox template is nothing but a blueprint jiska use karke sandbox create kiya jaata hai 
+Without a template:
+    Every time you want to test Next.js, you must install Node, install Next.js, set up shadcn, etc. (boring, slow).
+
+With a template:
+
+    You build a docker image(where you will mention files , paths where script is present and your code)
+    Then e2b will create a container and run that script file to check app is running or not , at last it takes the final snapshot and create a e2b template out of it
+    Next time, in seconds, you can create a sandbox (a fresh copy) already preloaded with everything → just start coding.
+
+e2b template build is used create sandbox template 
+sandbox template is build on top docker image
+
+e2b vs sandbox
+    e2b is a tool which gives you ability to create , build , and run sandboxes
+    A sandbox is an isolated environment (a container) where your code runs safely.
+
+sandbox is just like docker container there is few differences 
+    docker containers lives your in your own system but sandbox container runs on remote cloud 
+    Docker containers consume your local CPU/RAM, so you’re limited by your machine. Sandbox containers run in the cloud, so scaling is much easier.
+    Docker container → gives you the environment, but you still need to tell it how to start.Sandbox container → built from a template, knows how to start (via the --cmd) and is designed for instant use.
+
+To create a e2b sandbox template you need docker image + a script file(So e2b knows that app is running fine)
+
+one of the features of e2b sandbox is that it gives you live url(deployed) of your website 
+why ?? because in their container already everything is preconfigured so that it why deployment is very easy and fast
+
+below is the code to create e2b template for nextjs site which i ran from root directly and from there i specified docker file path 
+e2b template build --name vibe-nextjs-test-omkumarjha2 --cmd "/compile_page.sh" --dockerfile ./sandbox-templates/nextjs/e2b.Dockerfile
