@@ -4,10 +4,11 @@ import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { z } from "zod"
 import { PROMPT } from "@/prompt";
+import { prisma } from "@/lib/db";
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+export const createAgentFunction = inngest.createFunction(
+  { id: "code-agent" },
+  { event: "code-agent/run" },
 
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
@@ -17,14 +18,14 @@ export const helloWorld = inngest.createFunction(
 
     const codeAgent = createAgent({
       name: "code-agent",
-      description : "An expert coding agent",
+      description: "An expert coding agent",
       system: PROMPT,
-      model: openai({ 
-        model: "gpt-4.1" ,
+      model: openai({
+        model: "gpt-4.1",
         defaultParameters: {
           temperature: 0.1
         }
-      
+
       }),
       tools: [
         createTool({
@@ -32,7 +33,7 @@ export const helloWorld = inngest.createFunction(
           description: "Use the terminal to run commands",
           parameters: z.object({
             command: z.string(),
-          }) , 
+          }),
 
           handler: async ({ command }, { step }) => {
             return await step?.run("terminal", async () => {
@@ -73,7 +74,7 @@ export const helloWorld = inngest.createFunction(
                 content: z.string()
               })
             )
-          }) ,
+          }),
 
           handler: async (
             { files },
@@ -104,26 +105,26 @@ export const helloWorld = inngest.createFunction(
         }),
 
         createTool({
-          name : "readFiles",
-          description : "Read files from the sandbox",
-          parameters : z.object({
-            files : z.array(z.string()),
-          }) ,
+          name: "readFiles",
+          description: "Read files from the sandbox",
+          parameters: z.object({
+            files: z.array(z.string()),
+          }),
 
-          handler : async({files} , {step}) => {
-            return await step?.run("readFiles" , async() => {
+          handler: async ({ files }, { step }) => {
+            return await step?.run("readFiles", async () => {
 
-              try{
+              try {
                 const sandbox = await getSandbox(sandboxId);
                 const contents = [];
-                for(const file of files){
+                for (const file of files) {
                   const content = await sandbox.files.read(file);
-                  contents.push({path : file , content});
+                  contents.push({ path: file, content });
                 }
 
                 return JSON.stringify(contents);
               }
-              catch(e){
+              catch (e) {
                 return "Erorr : " + e;
               }
             })
@@ -132,37 +133,37 @@ export const helloWorld = inngest.createFunction(
 
       ],
 
-      lifecycle : {
+      lifecycle: {
         // Means Every time the agent answers, do something with its response before continuing.
-        onResponse : async({result , network}) => {
+        onResponse: async ({ result, network }) => {
           const lastAssistantTextMessageText = lastAssistantTextMessageContent(result);
 
-            if(lastAssistantTextMessageText && network){
-              if(lastAssistantTextMessageText.includes("<task_summary>")){
-                network.state.data.summary = lastAssistantTextMessageText
-              }
+          if (lastAssistantTextMessageText && network) {
+            if (lastAssistantTextMessageText.includes("<task_summary>")) {
+              network.state.data.summary = lastAssistantTextMessageText
             }
+          }
 
-            return result;
+          return result;
         }
       }
     });
 
     const network = createNetwork({
-      name : "coding-agent-network",
+      name: "coding-agent-network",
       agents: [codeAgent],
-      maxIter : 15,
-      router : async({ network }) => {
+      maxIter: 15,
+      router: async ({ network }) => {
         const summary = network.state.data.summary;
 
-        if(summary) return ;
+        if (summary) return;
 
         return codeAgent
       }
     })
 
-    
-    const result = await network.run(event.data?.email ?? ""); // it calls router and router decides whether to stop or call codeAgent for further execution
+
+    const result = await network.run(event.data.value); // it calls router and router decides whether to stop or call codeAgent for further execution
     // network eak shared memory use karta hai jo throughout the codeAgent iterations same rehti hai 
 
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
@@ -171,11 +172,45 @@ export const helloWorld = inngest.createFunction(
       return `https://${host}`
     })
 
-    return { 
-      url : sandboxUrl,
-      title : "Fragment",
-      files : result.state.data.files,
-      summary : result.state.data.summary
+    const isError = !(result?.state?.data?.summary) || Object.keys(result?.state?.data?.files || {}).length == 0
+
+    await step.run("save-message", async () => {
+      if(isError){
+        return await prisma.message.create({
+          data : {
+            content : "Something went wrong , please try again",
+            role : "ASSISTANT",
+            type : "ERROR",
+            projectId : event.data.projectId,
+          }
+        })
+      }
+
+      await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          role: "ASSISTANT",
+          type: "RESULT",
+          projectId : event.data.projectId,
+
+          fragment: {
+            create: {
+              sandboxUrl : sandboxUrl,
+              title : "Fragment",
+              files : JSON.stringify(result.state.data.files)
+            }
+          }
+
+        }
+
+      })
+    })
+
+    return {
+      url: sandboxUrl,
+      title: "Fragment",
+      files: result.state.data.files,
+      summary: result.state.data.summary
     };
   },
 );
