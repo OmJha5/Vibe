@@ -42,10 +42,13 @@ export const MessageForm = ({projectId} : Props) => {
     
     const [isFocused , setIsFocused] = useState(false);
     const showUsage = false;
+    let queryClient = useQueryClient();
 
     const createMessage = useMutation(trpc.messages.create.mutationOptions({
         onSuccess : (data) => {
             form.reset();
+            // Fetch the new messages list from the server
+            queryClient.invalidateQueries(trpc.messages.getMany.queryOptions({projectId}));
             // Todo : Invalidate usage
         },
 
