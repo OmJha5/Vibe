@@ -14,6 +14,8 @@ interface Props{
 
 export const MessagesContainer = ({projectId , activeFragment , setActiveFragment} : Props) => {
     const bottomRef = useRef<HTMLDivElement>(null);
+    const lastAssistantMessageRef = useRef<string | null>(null);
+
     const trpc = useTRPC();
     const {data : messages} = useSuspenseQuery(
         trpc.messages.getMany.queryOptions({projectId} , 
@@ -23,15 +25,18 @@ export const MessagesContainer = ({projectId , activeFragment , setActiveFragmen
         ),
     )
 
-    // useEffect(() => {
-    //     const lastAssistantMessage = messages.findLast(
-    //         (message) => message.role == "ASSISTANT"
-    //     )
+    useEffect(() => {
+        const lastAssistantMessage = messages.findLast(
+            (message) => message.role == "ASSISTANT"
+        )
 
-    //     if(lastAssistantMessage){
-    //         setActiveFragment(lastAssistantMessage.fragment)
-    //     }
-    // } , [messages])
+        if(lastAssistantMessage?.fragment && lastAssistantMessage.id != lastAssistantMessageRef.current){
+            lastAssistantMessageRef.current = lastAssistantMessage.id;
+            setActiveFragment(lastAssistantMessage.fragment)
+        }
+
+        
+    } , [messages])
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView(); // That makes the page automatically scroll to that <div> (the bottom).
