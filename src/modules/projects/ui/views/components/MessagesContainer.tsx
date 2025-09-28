@@ -23,15 +23,15 @@ export const MessagesContainer = ({projectId , activeFragment , setActiveFragmen
         ),
     )
 
-    useEffect(() => {
-        const lastAssistantMessage = messages.findLast(
-            (message) => message.role == "ASSISTANT"
-        )
+    // useEffect(() => {
+    //     const lastAssistantMessage = messages.findLast(
+    //         (message) => message.role == "ASSISTANT"
+    //     )
 
-        if(lastAssistantMessage){
-            setActiveFragment(lastAssistantMessage.fragment)
-        }
-    } , [messages])
+    //     if(lastAssistantMessage){
+    //         setActiveFragment(lastAssistantMessage.fragment)
+    //     }
+    // } , [messages])
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView(); // That makes the page automatically scroll to that <div> (the bottom).
