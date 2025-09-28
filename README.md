@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# AI-Powered Full-Stack App Generator
+
+A Next.js 15 full-stack application that generates complete web applications from **natural language prompts** using AI agents powered by **OpenAI LLMs**. Users can explore all generated project files in a sandboxed environment.
+
+
+## Demo
+
+![Project Demo](./public/ProjectDemo.gif)
+
+
+## Features
+
+- Converts **natural language prompts** into live Next.js projects.
+- **Sandboxed template execution system** that allows AI to autonomously add files safely.
+- Full access to all **AI-generated project files and code previews**.
+- Implements **project dashboards and theme customization** for easy exploration.
+
+## Tech Stack
+- **Frontend & Backend:** Next.js 15, React 19, Tailwind v4  
+- **Full-Stack Communication:** tRPC  
+- **Background Jobs & AI Agents:** Inngest, OpenAI LLM  
+- **Sandboxing & Templates:** Docker  
+
 
 ## Getting Started
 
-First, run the development server:
+Clone the repository:  
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+  git clone git@github.com:OmJha5/Vibe.git
+```
+Install dependencies:  
+
+```bash
+  npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create a .env file in the project root and add below:  
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+  DATABASE_URL=your_postgresql_url
+  OPENAI_API_KEY=your_openai_key
+  NEXT_PUBLIC_SOURCE_APP=http://localhost:3000
+  NODE_ENV=development
+  E2B_API_KEY=your_e2b_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create the e2b sandbox template which will be used by AI Agent to make full stack NextJs site.
 
-## Learn More
+```bash
+  e2b template build --name {your unique sandbox template name} --cmd "/compile_page.sh" --dockerfile ./sandbox-templates/nextjs/e2b.Dockerfile
+```
 
-To learn more about Next.js, take a look at the following resources:
+Start the development server and inngest development server:  
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+  npm run dev
+  npx inngest-cli@1.8.0 dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    
+## Other Instruction
+
+Make sure Docker is installed in your PC which will be used while creating sandbox template and if you find any problem you can reach out to me at omjha003@gmail.com
+
